@@ -205,6 +205,12 @@ class procurement_order(osv.osv):
                     if self._assign(cr, uid, procurement, context=context):
                         res = self._run(cr, uid, procurement, context=context or {})
                         if res:
+                            if procurement.order_line_id.supply_source in ('produce', 'buy', 'change_spec', 'change_surface') or (procurement.order_line_id.supply_source == 'stock' and procurement.order_line_id.change_package == True):
+                                if len(self.pool.get('mrp.production').search(cr, uid, [('order_line_id', '=', procurement.order_line_id.id)])) <= 0:
+                                    procurement.is_running = False
+                            elif procurement.order_line_id.supply_source in ('outbuy', 'buy'):
+                                if len(self.pool.get('purchase.requisition.line').search(cr, uid, [('sale_order_line_id', '=', procurement.order_line_id.id)])) <= 0:
+                                    procurement.is_running = False
                             self.write(cr, uid, [procurement.id], {'state': 'running'}, context=context)
                         else:
                             self.write(cr, uid, [procurement.id], {'state': 'exception'}, context=context)

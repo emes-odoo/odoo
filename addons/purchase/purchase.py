@@ -846,7 +846,7 @@ class purchase_order(osv.osv):
         '''PO is done at the delivery side if all the incoming shipments are done'''
         for purchase in self.browse(cr, uid, ids, context=context):
             for picking in purchase.picking_ids:
-                if picking.sudo().state != 'done':
+                if picking.state != 'done':
                     return False
         return True
 
@@ -858,9 +858,9 @@ class purchase_order(osv.osv):
         alldoneorcancel = True
         for purchase in self.browse(cr, uid, ids, context=context):
             for picking in purchase.picking_ids:
-                if picking.sudo().state == 'cancel':
+                if picking.state == 'cancel':
                     at_least_one_canceled = True
-                if picking.sudo().state not in ['done', 'cancel']:
+                if picking.state not in ['done', 'cancel']:
                     alldoneorcancel = False
         return at_least_one_canceled and alldoneorcancel
 

@@ -497,8 +497,16 @@ class product_template(osv.osv):
             for product in self.browse(cr, uid, ids, context=context):
                 old_uom = product.uom_id
                 if old_uom != new_uom:
-                    if self.pool.get('stock.move').search(cr, uid, [('product_id', 'in', [x.id for x in product.product_variant_ids]), ('state', '=', 'done')], limit=1, context=context):
-                        raise except_orm(_('Warning'), _("You can not change the unit of measure of a product that has already been used in a done stock move. If you need to change the unit of measure, you may deactivate this product."))
+                    list = []
+                    product_id = self.pool.get('product.product').search(cr,uid,[('product_tmpl_id','=',product.id)],limit=1)
+                    if product_id:
+                        sql = """select a.id from stock_quant a
+                        left join stock_location b on b.id=a.location_id
+                        where a.product_id = %s and b.usage='internal' and b.is_mrp = true""" % product_id[0]
+                        cr.execute(sql)
+                        list = filter(None, map(lambda x: x[0], cr.fetchall()))
+                    if list:
+                        raise except_orm(_(u'提示!'), _(u"当前货品存在可用库存,无法修改计量单位。"))
         return super(product_template, self).write(cr, uid, ids, vals, context=context)
 
 
